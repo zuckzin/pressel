@@ -3,75 +3,85 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Venus | Pré-venda</title>
-  <meta name="description" content="Conteúdos exclusivos. Entre no canal para acessar." />
-
-  <!-- Estilo simples e limpo -->
+  <title>Acesso Exclusivo</title>
+  <meta name="description" content="Conteúdo exclusivo para membros. Entre para acessar." />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <style>
-    :root { --bg:#0b0b0f; --card:#12121a; --txt:#f2f2f5; --muted:#a0a0b2; }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif}
+    :root{--bg:#0b0b0f;--card:#12121a;--txt:#f2f2f5;--mut:#a0a0b2}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif}
     .wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
-    .card{width:100%;max-width:560px;background:linear-gradient(180deg, #141420, #0f0f18);border:1px solid #232334;border-radius:20px;padding:28px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
-    .badge{display:inline-block;padding:6px 10px;border:1px solid #2b2b3a;border-radius:999px;font-size:12px;color:var(--muted);letter-spacing:.3px}
-    h1{margin:14px 0 8px;font-size:28px;line-height:1.15}
-    p{margin:0 0 14px;color:var(--muted)}
-    ul{margin:10px 0 22px;padding-left:18px;color:var(--muted)}
-    .cta{display:block;width:100%;padding:14px 18px;background:#8247ff;border:0;border-radius:14px;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
-    .cta:active{transform:translateY(1px)}
-    .legal{margin-top:12px;font-size:12px;color:#7d7d90}
+    .card{max-width:560px;width:100%;background:linear-gradient(180deg,#141420,#0f0f18);
+      border:1px solid #232334;border-radius:20px;padding:28px;box-shadow:0 10px 40px rgba(0,0,0,.35);text-align:center}
+    h1{margin:6px 0 10px;font-size:28px}
+    p{margin:0 0 12px;color:var(--mut)}
+    .bar{height:6px;background:#22223a;border-radius:999px;overflow:hidden;margin:16px 0 6px}
+    .fill{height:100%;width:0%}
+    .hint{font-size:12px;color:#7d7d90}
+    .cta{display:inline-block;margin-top:14px;padding:12px 16px;background:#8247ff;border-radius:12px;color:#fff;text-decoration:none;font-weight:700}
+    .hide{display:none}
   </style>
 
   <!-- Meta Pixel -->
   <script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', 'PIXEL_ID_AQUI');
-  fbq('track', 'PageView');
-  fbq('trackCustom', 'PressellView');
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+  (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init','PIXEL_ID_AQUI');
+  fbq('track','PageView');
+  fbq('track','ViewContent',{page:'pressell'});
   </script>
   <noscript>
     <img height="1" width="1" style="display:none"
          src="https://www.facebook.com/tr?id=PIXEL_ID_AQUI&ev=PageView&noscript=1"/>
+    <!-- Fallback de redirecionamento sem JS em 1,5s -->
+    <meta http-equiv="refresh" content="1.5;url=https://t.me/SEU_CANAL_OU_BOT">
   </noscript>
 </head>
-
 <body>
   <div class="wrap">
-    <main class="card" role="main">
-      <span class="badge">Conteúdo exclusivo</span>
-      <h1>Entre no canal para acessar</h1>
-      <p>Selecionamos material premium e liberamos por tempo limitado para membros.</p>
-      <ul>
-        <li>Atualizações diárias</li>
-        <li>Conteúdo organizado por temas</li>
-        <li>Acesso imediato pelo Telegram</li>
-      </ul>
-
-      <button id="cta" class="cta" aria-label="Entrar no canal do Telegram">
-        Entrar no Canal →
-      </button>
-      <p class="legal">Ao continuar, você concorda com nossos termos e confirma ter 18+.</p>
+    <main class="card" role="main" aria-live="polite">
+      <h1>Conferindo acesso…</h1>
+      <p>Você será enviado ao canal em instantes.</p>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <p class="hint">Se não redirecionar, <a id="cta" class="cta" href="#" rel="noopener">clique aqui</a>.</p>
+      <p class="hint">Ao continuar, você confirma ter 18+ e concorda com nossos termos.</p>
     </main>
   </div>
 
   <script>
-    const TELEGRAM_URL = "https://t.me/Vazadosoficial00_bot";
+    // ====== Config ======
+    const DEST_BASE = "https://t.me/SEU_CANAL_OU_BOT"; // SUBSTITUA por seu canal/bot LEGAL
+    const MIN_DELAY_MS = 700;  // tempo para garantir carregamento do Pixel
+    const MAX_DELAY_MS = 1500; // limite superior (UX)
+    const CTA_EVENT = 'Lead';
 
-    document.getElementById('cta').addEventListener('click', function(){
-      try {
-        // Registra o clique como evento de intenção/lead antes de sair
-        fbq('track', 'Lead', { destination: 'telegram_channel' });
-      } catch(e) {}
+    // UTM passthrough: mantém parâmetros do anúncio
+    const qs = window.location.search;
+    const hash = window.location.hash || '';
+    const DEST_URL = DEST_BASE + (qs ? qs : '') + (hash ? hash : '');
 
-      // Pequeno delay para garantir o disparo do pixel
-      setTimeout(function(){ window.location.href = TELEGRAM_URL; }, 350);
-    });
+    // Barra fake de progresso (apenas UX)
+    const fill = document.getElementById('fill');
+    let w = 0; const step = () => { w = Math.min(100, w + 4 + Math.random()*6); fill.style.width = w + '%'; if (w < 100) requestAnimationFrame(step); }; step();
+
+    // Dispara evento de intenção antes do redirect
+    function go(){
+      try { fbq('track', CTA_EVENT, { destination: 'telegram' }); } catch(e) {}
+      setTimeout(() => { window.location.replace(DEST_URL); }, 350); // pequeno delay pro evento subir
+    }
+
+    // Auto-redirect com janela entre MIN e MAX (randômico leve)
+    const delay = Math.floor(MIN_DELAY_MS + Math.random()*(MAX_DELAY_MS - MIN_DELAY_MS));
+    setTimeout(go, delay);
+
+    // Fallback via CTA
+    const cta = document.getElementById('cta');
+    cta.addEventListener('click', (e)=>{ e.preventDefault(); go(); });
+
+    // Segurança: se fbq não carregar, ainda assim redireciona
+    setTimeout(() => { if (!window.fbq) window.location.replace(DEST_URL); }, MAX_DELAY_MS + 600);
   </script>
 </body>
 </html>
