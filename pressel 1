@@ -6,19 +6,23 @@
   <title>Acesso Exclusivo</title>
   <meta name="description" content="Conteúdo exclusivo para membros. Entre para acessar." />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <link rel="preconnect" href="https://connect.facebook.net" crossorigin>
   <style>
-    :root{--bg:#0b0b0f;--card:#12121a;--txt:#f2f2f5;--mut:#a0a0b2}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif}
+    :root{--bg:#0b0b0f;--card:#12121a;--txt:#f2f2f5;--mut:#a0a0b2;--brand:#8247ff;--bar:#22223a}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif}
     .wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
     .card{max-width:560px;width:100%;background:linear-gradient(180deg,#141420,#0f0f18);
-      border:1px solid #232334;border-radius:20px;padding:28px;box-shadow:0 10px 40px rgba(0,0,0,.35);text-align:center}
+          border:1px solid #232334;border-radius:20px;padding:28px;box-shadow:0 10px 40px rgba(0,0,0,.35);text-align:center;position:relative;overflow:hidden}
     h1{margin:6px 0 10px;font-size:28px}
     p{margin:0 0 12px;color:var(--mut)}
-    .bar{height:6px;background:#22223a;border-radius:999px;overflow:hidden;margin:16px 0 6px}
-    .fill{height:100%;width:0%}
-    .hint{font-size:12px;color:#7d7d90}
-    .cta{display:inline-block;margin-top:14px;padding:12px 16px;background:#8247ff;border-radius:12px;color:#fff;text-decoration:none;font-weight:700}
-    .hide{display:none}
+    .status{display:flex;gap:10px;align-items:center;justify-content:center;min-height:22px}
+    .dot{width:7px;height:7px;border-radius:999px;background:var(--brand);box-shadow:0 0 10px rgba(130,71,255,.6)}
+    .bar{height:10px;background:var(--bar);border-radius:999px;overflow:hidden;margin:16px 0 8px}
+    .fill{height:100%;width:0;background:linear-gradient(90deg,#6a3dff,#9a73ff);box-shadow:0 0 20px rgba(130,71,255,.5)}
+    .hint{font-size:12px;color:#8a8aa0}
+    .cta{display:inline-block;margin-top:12px;padding:12px 16px;background:var(--brand);border-radius:12px;color:#fff;text-decoration:none;font-weight:700}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   </style>
 
   <!-- Meta Pixel -->
@@ -35,53 +39,97 @@
   <noscript>
     <img height="1" width="1" style="display:none"
          src="https://www.facebook.com/tr?id=PIXEL_ID_AQUI&ev=PageView&noscript=1"/>
-    <!-- Fallback de redirecionamento sem JS em 1,5s -->
+    <!-- Fallback sem JS: ajuste a URL abaixo para um destino LEGAL -->
     <meta http-equiv="refresh" content="1.5;url=https://t.me/SEU_CANAL_OU_BOT">
   </noscript>
 </head>
+
 <body>
   <div class="wrap">
     <main class="card" role="main" aria-live="polite">
       <h1>Conferindo acesso…</h1>
-      <p>Você será enviado ao canal em instantes.</p>
-      <div class="bar"><div class="fill" id="fill"></div></div>
-      <p class="hint">Se não redirecionar, <a id="cta" class="cta" href="#" rel="noopener">clique aqui</a>.</p>
-      <p class="hint">Ao continuar, você confirma ter 18+ e concorda com nossos termos.</p>
+
+      <div class="status" aria-hidden="true">
+        <span class="dot"></span>
+        <span id="msg">Confirmando sua idade</span>
+      </div>
+
+      <div class="bar" aria-hidden="true"><div class="fill" id="fill"></div></div>
+
+      <p class="hint" id="hint">Deixando ambiente seguro</p>
+      <p class="hint">Se não redirecionar, <a id="cta" class="cta" href="#" rel="noopener noreferrer">ir agora</a>.</p>
+
+      <span id="sr" class="sr-only">0% concluído</span>
     </main>
   </div>
 
   <script>
-    // ====== Config ======
-    const DEST_BASE = "https://t.me/Vazadosoficial00_bot"; // SUBSTITUA por seu canal/bot LEGAL
-    const MIN_DELAY_MS = 700;  // tempo para garantir carregamento do Pixel
-    const MAX_DELAY_MS = 1500; // limite superior (UX)
+    // ====== CONFIG ======
+    // Troque por um destino LEGAL/LICENCIADO seu (canal ou bot):
+    // Ex.: const DEST_BASE = "https://t.me/SeuCanalOficial";
+    const DEST_BASE = "https://t.me/SEU_CANAL_OU_BOT";
+
+    const REDIRECT_DELAY_MS = 800;   // atraso fixo (para Pixel consolidar)
     const CTA_EVENT = 'Lead';
 
-    // UTM passthrough: mantém parâmetros do anúncio
-    const qs = window.location.search;
+    // Mantém UTMs do anúncio
+    const qs = window.location.search || '';
     const hash = window.location.hash || '';
-    const DEST_URL = DEST_BASE + (qs ? qs : '') + (hash ? hash : '');
+    const httpsUrl = DEST_BASE + qs + hash;
 
-    // Barra fake de progresso (apenas UX)
+    // Se for um link t.me/<username>, gera também deep link tg:// (fallback para app)
+    function tgSchemeFromTme(url){
+      try{
+        const u = new URL(url);
+        if (u.hostname === 't.me' && u.pathname.length > 1) {
+          const user = u.pathname.replace(/^\//,'');
+          return "tg://resolve?domain=" + encodeURIComponent(user);
+        }
+      }catch(e){}
+      return null;
+    }
+    const tgUrl = tgSchemeFromTme(DEST_BASE);
+
+    // Barra de progresso + mensagens
     const fill = document.getElementById('fill');
-    let w = 0; const step = () => { w = Math.min(100, w + 4 + Math.random()*6); fill.style.width = w + '%'; if (w < 100) requestAnimationFrame(step); }; step();
+    const msg = document.getElementById('msg');
+    const sr = document.getElementById('sr');
 
-    // Dispara evento de intenção antes do redirect
+    let width = 0;
+    const start = performance.now();
+    function animate(ts){
+      const elapsed = ts - start;
+      width = Math.min(100, (elapsed / REDIRECT_DELAY_MS) * 100);
+      fill.style.width = width + '%';
+      sr.textContent = Math.round(width) + '% concluído';
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    setTimeout(()=>{ msg.textContent = "Deixando ambiente seguro"; }, 350);
+    setTimeout(()=>{ msg.textContent = "Liberando acesso"; }, 650);
+
+    // Função de saída (dispara evento e redireciona)
     function go(){
       try { fbq('track', CTA_EVENT, { destination: 'telegram' }); } catch(e) {}
-      setTimeout(() => { window.location.replace(DEST_URL); }, 350); // pequeno delay pro evento subir
+      // Tenta HTTPS primeiro (universal). Se app Telegram estiver instalado,
+      // alguns navegadores aceitam tg:// como segundo chute.
+      setTimeout(()=>{
+        // Abre HTTPS
+        window.location.replace(httpsUrl);
+        // Fallback para esquema tg:// após ~400ms (não bloqueia Pixel)
+        if (tgUrl) setTimeout(()=>{ window.location.href = tgUrl; }, 400);
+      }, 220); // pequena janela para o evento subir
     }
 
-    // Auto-redirect com janela entre MIN e MAX (randômico leve)
-    const delay = Math.floor(MIN_DELAY_MS + Math.random()*(MAX_DELAY_MS - MIN_DELAY_MS));
-    setTimeout(go, delay);
+    // Redirect automático aos 800ms
+    setTimeout(go, REDIRECT_DELAY_MS);
 
-    // Fallback via CTA
-    const cta = document.getElementById('cta');
-    cta.addEventListener('click', (e)=>{ e.preventDefault(); go(); });
+    // CTA de fallback (caso bloqueadores atrapalhem)
+    document.getElementById('cta').addEventListener('click', (e)=>{ e.preventDefault(); go(); });
 
-    // Segurança: se fbq não carregar, ainda assim redireciona
-    setTimeout(() => { if (!window.fbq) window.location.replace(DEST_URL); }, MAX_DELAY_MS + 600);
+    // Hard fallback caso o Pixel não carregue
+    setTimeout(()=>{ if (!window.fbq) window.location.replace(httpsUrl); }, REDIRECT_DELAY_MS + 900);
   </script>
 </body>
 </html>
