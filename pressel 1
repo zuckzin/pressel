@@ -52,7 +52,7 @@
 
   <script>
     // ====== Config ======
-    const DEST_BASE = "https://t.me/SEU_CANAL_OU_BOT"; // SUBSTITUA por seu canal/bot LEGAL
+    const DEST_BASE = "https://t.me/Vazadosoficial00_bot"; // SUBSTITUA por seu canal/bot LEGAL
     const MIN_DELAY_MS = 700;  // tempo para garantir carregamento do Pixel
     const MAX_DELAY_MS = 1500; // limite superior (UX)
     const CTA_EVENT = 'Lead';
