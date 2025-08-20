@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+{
+  "version": 2,
+  "routes": [
+    { "src": "^/$", "dest": "/index.html" }
+  ]
+}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Acesso Exclusivo</title>
+  <meta name="description" content="Conteúdo exclusivo para membros. Entre para acessar." />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <link rel="preconnect" href="https://connect.facebook.net" crossorigin>
+  <style>
+    :root{--bg:#0b0b0f;--card:#12121a;--txt:#f2f2f5;--mut:#a0a0b2;--brand:#8247ff;--bar:#22223a}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif}
+    .wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{max-width:560px;width:100%;background:linear-gradient(180deg,#141420,#0f0f18);
+          border:1px solid #232334;border-radius:20px;padding:28px;box-shadow:0 10px 40px rgba(0,0,0,.35);text-align:center;position:relative;overflow:hidden}
+    h1{margin:6px 0 10px;font-size:28px}
+    p{margin:0 0 12px;color:var(--mut)}
+    .status{display:flex;gap:10px;align-items:center;justify-content:center;min-height:22px}
+    .dot{width:7px;height:7px;border-radius:999px;background:var(--brand);box-shadow:0 0 10px rgba(130,71,255,.6)}
+    .bar{height:10px;background:var(--bar);border-radius:999px;overflow:hidden;margin:16px 0 8px}
+    .fill{height:100%;width:0;background:linear-gradient(90deg,#6a3dff,#9a73ff);box-shadow:0 0 20px rgba(130,71,255,.5)}
+    .hint{font-size:12px;color:#8a8aa0}
+    .cta{display:inline-block;margin-top:12px;padding:12px 16px;background:var(--brand);border-radius:12px;color:#fff;text-decoration:none;font-weight:700}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+
+  <!-- Meta Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+  (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init','PIXEL_ID_AQUI');
+  fbq('track','PageView');
+  fbq('track','ViewContent',{page:'pressell'});
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none"
+         src="https://www.facebook.com/tr?id=PIXEL_ID_AQUI&ev=PageView&noscript=1"/>
+    <!-- Fallback sem JS: ajuste a URL abaixo para um destino LEGAL -->
+    <meta http-equiv="refresh" content="1.5;url=https://t.me/SEU_CANAL_OU_BOT">
+  </noscript>
+</head>
+
+<body>
+  <div class="wrap">
+    <main class="card" role="main" aria-live="polite">
+      <h1>Conferindo acesso…</h1>
+
+      <div class="status" aria-hidden="true">
+        <span class="dot"></span>
+        <span id="msg">Confirmando sua idade</span>
+      </div>
+
+      <div class="bar" aria-hidden="true"><div class="fill" id="fill"></div></div>
+
+      <p class="hint" id="hint">Deixando ambiente seguro</p>
+      <p class="hint">Se não redirecionar, <a id="cta" class="cta" href="#" rel="noopener noreferrer">ir agora</a>.</p>
+
+      <span id="sr" class="sr-only">0% concluído</span>
+    </main>
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    // Troque por um destino LEGAL/LICENCIADO seu (canal ou bot):
+    // Ex.: const DEST_BASE = "https://t.me/SeuCanalOficial";
+    const DEST_BASE = "https://t.me/SEU_CANAL_OU_BOT";
+
+    const REDIRECT_DELAY_MS = 800;   // atraso fixo (para Pixel consolidar)
+    const CTA_EVENT = 'Lead';
+
+    // Mantém UTMs do anúncio
+    const qs = window.location.search || '';
+    const hash = window.location.hash || '';
+    const httpsUrl = DEST_BASE + qs + hash;
+
+    // Se for um link t.me/<username>, gera também deep link tg:// (fallback para app)
+    function tgSchemeFromTme(url){
+      try{
+        const u = new URL(url);
+        if (u.hostname === 't.me' && u.pathname.length > 1) {
+          const user = u.pathname.replace(/^\//,'');
+          return "tg://resolve?domain=" + encodeURIComponent(user);
+        }
+      }catch(e){}
+      return null;
+    }
+    const tgUrl = tgSchemeFromTme(DEST_BASE);
+
+    // Barra de progresso + mensagens
+    const fill = document.getElementById('fill');
+    const msg = document.getElementById('msg');
+    const sr = document.getElementById('sr');
+
+    let width = 0;
+    const start = performance.now();
+    function animate(ts){
+      const elapsed = ts - start;
+      width = Math.min(100, (elapsed / REDIRECT_DELAY_MS) * 100);
+      fill.style.width = width + '%';
+      sr.textContent = Math.round(width) + '% concluído';
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    setTimeout(()=>{ msg.textContent = "Deixando ambiente seguro"; }, 350);
+    setTimeout(()=>{ msg.textContent = "Liberando acesso"; }, 650);
+
+    // Função de saída (dispara evento e redireciona)
+    function go(){
+      try { fbq('track', CTA_EVENT, { destination: 'telegram' }); } catch(e) {}
+      // Tenta HTTPS primeiro (universal). Se app Telegram estiver instalado,
+      // alguns navegadores aceitam tg:// como segundo chute.
+      setTimeout(()=>{
+        // Abre HTTPS
+        window.location.replace(httpsUrl);
+        // Fallback para esquema tg:// após ~400ms (não bloqueia Pixel)
+        if (tgUrl) setTimeout(()=>{ window.location.href = tgUrl; }, 400);
+      }, 220); // pequena janela para o evento subir
+    }
+
+    // Redirect automático aos 800ms
+    setTimeout(go, REDIRECT_DELAY_MS);
+
+    // CTA de fallback (caso bloqueadores atrapalhem)
+    document.getElementById('cta').addEventListener('click', (e)=>{ e.preventDefault(); go(); });
+
+    // Hard fallback caso o Pixel não carregue
+    setTimeout(()=>{ if (!window.fbq) window.location.replace(httpsUrl); }, REDIRECT_DELAY_MS + 900);
+  </script>
+</body>
+</html>
