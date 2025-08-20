@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
+{
+  "version": 2,
+  "routes": [
+    { "src": "^/$", "dest": "/index.html" }
+  ]
+}
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Acesso Exclusivo</title>
