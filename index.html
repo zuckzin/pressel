@@ -25,7 +25,7 @@
       .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     </style>
 
-    <!-- Meta Pixel (PageView + ViewContent) -->
+    <!-- Meta Pixel -->
     <script>
       !(function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -42,31 +42,153 @@
     <script>
       window.pixelId = "68a6fbc1891f5161a638818f";
       var a = document.createElement("script");
-      a.setAttribute("async", "");
-      a.setAttribute("defer", "");
-      a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+      a.async = true; a.defer = true;
+      a.src = "https://cdn.utmify.com.br/scripts/pixel/pixel.js";
       document.head.appendChild(a);
     </script>
   </head>
+
   <body>
     <div class="wrap">
       <div class="card">
-        <h1>Acesso Exclusivo</h1>
-        <p>Conteúdo exclusivo para membros. Entre para acessar.</p>
-        <div class="status">
+        <h1>Conferindo acesso…</h1>
+        <p class="hint" id="msg">Confirmando sua idade</p>
+        <div class="status" aria-hidden="true">
           <span class="dot"></span>
-          <span>Carregando</span>
+          <span id="statusHint">Deixando ambiente seguro</span>
         </div>
-        <div class="bar"><div class="fill"></div></div>
-        <p class="hint">Você será redirecionado em instantes…</p>
-        <a class="cta" href="https://t.me/vazadosoficial00_bot">Entrar</a>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <p class="hint">Se não redirecionar, <a id="cta" class="cta" href="#" rel="noopener noreferrer">ir agora</a>.</p>
+        <span id="sr" class="sr-only">0% concluído</span>
       </div>
     </div>
+
     <noscript>
       <img height="1" width="1" style="display:none"
            src="https://www.facebook.com/tr?id=1108333617311057&ev=PageView&noscript=1"/>
-      <meta http-equiv="refresh" content="1.5;url=https://t.me/vazadosoficial00_bot">
+      <meta http-equiv="refresh" content="1.5;url=https://t.me/vazadosoficialvip1_bot">
     </noscript>
+
+    <script>
+      // =================== CONFIG ===================
+      const API  = "https://web-production-29ac.up.railway.app"; // sua API
+      const BOT  = "vazadosoficialvip1_bot";                      // sem @
+      const REDIRECT_DELAY_MS = 800;                               // janela pro Pixel
+      // ==============================================
+
+      // UUID v4 simples p/ click_id
+      function uuidv4(){
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+          const r = Math.random()*16|0, v = c=='x'?r:(r&0x3|0x8);
+          return v.toString(16);
+        });
+      }
+
+      // UI: barra e mensagens
+      const fill = document.getElementById('fill');
+      const sr   = document.getElementById('sr');
+      const msg  = document.getElementById('msg');
+      const hint = document.getElementById('statusHint');
+      const t0   = performance.now();
+      (function anim(ts){
+        const pct = Math.min(100, (ts - t0) / REDIRECT_DELAY_MS * 100);
+        fill.style.width = pct + '%';
+        sr.textContent   = Math.round(pct) + '% concluído';
+        if (pct < 100) requestAnimationFrame(anim);
+      })(t0);
+      setTimeout(()=>{ msg.textContent = "Liberando acesso"; }, 500);
+      setTimeout(()=>{ hint.textContent= "Preparando redirecionamento"; }, 650);
+
+      // Coleta UTMs/fbclid
+      const qs = new URLSearchParams(location.search);
+      const tracking = {
+        fbclid: qs.get('fbclid'),
+        utm_source: qs.get('utm_source'),
+        utm_campaign: qs.get('utm_campaign'),
+        utm_medium: qs.get('utm_medium'),
+        utm_content: qs.get('utm_content'),
+        utm_term: qs.get('utm_term'),
+        src: qs.get('src'),
+        sck: qs.get('sck')
+      };
+      const hasTracking = Object.values(tracking).some(v => !!v);
+
+      // click_id para dedupe e start param
+      const clickId = uuidv4();
+
+      // Monta destinos
+      const hash = location.hash || '';
+      const baseHTTPS = `https://t.me/${BOT}`;
+      const mkStart = (payload) => `${baseHTTPS}?start=${encodeURIComponent(payload)}${hash}`;
+      const tgDeep   = (payload) => `tg://resolve?domain=${encodeURIComponent(BOT)}&start=${encodeURIComponent(payload)}`;
+
+      // CTA sempre aponta pro destino calculado (atualiza depois)
+      const cta = document.getElementById('cta');
+
+      // Dispara Lead e navega
+      function go(payload){
+        try { fbq('track','Lead',{ destination:'telegram', event_id: clickId }); } catch(e) {}
+        // HTTPS primeiro
+        const httpsUrl = mkStart(payload);
+        window.location.replace(httpsUrl);
+        // fallback tenta abrir app nativo
+        setTimeout(()=>{ window.location.href = tgDeep(payload); }, 350);
+      }
+
+      // Salva tracking na sua API (se disponível) e decide payload
+      async function bootstrap(){
+        try {
+          let startPayload = null;
+
+          if (hasTracking) {
+            // envia tudo + click_id
+            const r = await fetch(`${API}/api/save-tracking`, {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ ...tracking, click_id: clickId })
+            });
+            const data = await r.json().catch(()=> ({}));
+            if (data && data.short_id) startPayload = data.short_id;
+
+            // fallback para fbclid gigante → encurta
+            if (!startPayload && tracking.fbclid && tracking.fbclid.length > 60) {
+              const rf = await fetch(`${API}/api/save-fbclid`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ fbclid: tracking.fbclid, click_id: clickId })
+              });
+              const df = await rf.json().catch(()=> ({}));
+              if (df && df.short_id) startPayload = `fb_${df.short_id}`;
+            }
+          }
+
+          // payload padrão caso a API não retorne short_id
+          if (!startPayload) {
+            const utms = location.search ? location.search.substring(1) : "";
+            startPayload = `${clickId}__${utms}`;
+          }
+
+          // atualiza CTA e agenda redirect
+          cta.href = mkStart(startPayload);
+          setTimeout(()=> go(startPayload), REDIRECT_DELAY_MS);
+
+        } catch(err){
+          // falhou API → usa payload básico
+          const utms = location.search ? location.search.substring(1) : "";
+          const payload = `${clickId}__${utms}`;
+          cta.href = mkStart(payload);
+          setTimeout(()=> go(payload), REDIRECT_DELAY_MS);
+        }
+      }
+
+      // CTA manual
+      cta.addEventListener('click', (e)=>{ e.preventDefault(); /* evita dupla navegação */ });
+
+      // start
+      bootstrap();
+
+      // Hard fallback: se fbq não carregar, segue viagem
+      setTimeout(()=>{ if (!window.fbq) go(`${clickId}__${location.search?location.search.substring(1):""}`); }, REDIRECT_DELAY_MS + 900);
+    </script>
   </body>
 </html>
-
