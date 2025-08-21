@@ -33,13 +33,13 @@
         t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
       )(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 
-      fbq('init','PIXEL_ID_AQUI');            // ← coloque seu Pixel ID
-      fbq('track','PageView');                 // visita
+      fbq('init','1108333617311057');            // Pixel ID fixo
+      fbq('track','PageView');                   // visita
       fbq('track','ViewContent',{page:'pressell'}); // visualização do conteúdo
     </script>
     <noscript>
       <img height="1" width="1" style="display:none"
-           src="https://www.facebook.com/tr?id=PIXEL_ID_AQUI&ev=PageView&noscript=1"/>
+           src="https://www.facebook.com/tr?id=1108333617311057&ev=PageView&noscript=1"/>
       <meta http-equiv="refresh" content="1.5;url=https://t.me/SeuBotOficial">
     </noscript>
   </head>
@@ -63,12 +63,10 @@
 
     <script>
       // ================= CONFIG =================
-      // Use SEMPRE a URL COMPLETA do seu BOT legal/licenciado:
-      const BOT_URL = "https://t.me/vazadosoficial00_bot"; // ex.: https://t.me/SeuBotOficial
-      const REDIRECT_DELAY_MS = 800;                 // janela para o Pixel enviar eventos
+      const BOT_URL = "https://t.me/vazadosoficial00_bot"; 
+      const REDIRECT_DELAY_MS = 800;                 
       // ==========================================
 
-      // (1) UUID v4 simples → click_id
       function uuidv4(){
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
           const r = Math.random()*16|0, v = c=='x'?r:(r&0x3|0x8);
@@ -76,15 +74,12 @@
         });
       }
 
-      // (2) Captura UTMs e monta payload para o Telegram
-      const qs   = window.location.search || '';          // ?utm_source=...
+      const qs   = window.location.search || '';         
       const hash = window.location.hash || '';
       const clickId = uuidv4();
-      // payload: "<click_id>__utm_source=...&utm_campaign=..."
       const payload = encodeURIComponent(clickId + "__" + (qs ? qs.substring(1) : ""));
       const DEST_HTTPS = BOT_URL + (BOT_URL.includes('?') ? '&' : '?') + 'start=' + payload + hash;
 
-      // (3) Fallback tg:// (abre app do Telegram em alguns navegadores)
       function tgSchemeFromTme(url){
         try{
           const u = new URL(url);
@@ -97,7 +92,6 @@
       }
       const DEST_TG = tgSchemeFromTme(BOT_URL);
 
-      // UI: barra/mensagens
       const fill = document.getElementById('fill');
       const msg  = document.getElementById('msg');
       const sr   = document.getElementById('sr');
@@ -112,26 +106,20 @@
       setTimeout(()=>{ msg.textContent = "Deixando ambiente seguro"; }, 350);
       setTimeout(()=>{ msg.textContent = "Liberando acesso"; }, 650);
 
-      // (4) Dispara LEAD com dedup (event_id = click_id) e redireciona
       function go(){
         try {
           fbq('track', 'Lead', { destination:'telegram', event_id: clickId });
         } catch(e) {}
         setTimeout(()=>{
-          // HTTPS sempre
           window.location.replace(DEST_HTTPS);
-          // Opcional: tentativa tg:// após ~400ms
           if (DEST_TG) setTimeout(()=>{ window.location.href = DEST_TG; }, 400);
-        }, 220); // pequena janela para subir o evento
+        }, 220); 
       }
 
-      // Auto-redirect e CTA de fallback
       setTimeout(go, REDIRECT_DELAY_MS);
       document.getElementById('cta').addEventListener('click', (e)=>{ e.preventDefault(); go(); });
 
-      // Hard fallback: se fbq não carregar
       setTimeout(()=>{ if(!window.fbq) window.location.replace(DEST_HTTPS); }, REDIRECT_DELAY_MS + 900);
     </script>
   </body>
 </html>
-
