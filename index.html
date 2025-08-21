@@ -25,7 +25,7 @@
       .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     </style>
 
-    <!-- Meta Pixel -->
+    <!-- Meta Pixel (PageView + ViewContent) -->
     <script>
       !(function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -33,14 +33,14 @@
         t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
       )(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 
-      fbq('init','1108333617311057');            // Pixel ID fixo
-      fbq('track','PageView');                   // visita
-      fbq('track','ViewContent',{page:'pressell'}); // visualização do conteúdo
+      fbq('init','1108333617311057');                 // <-- seu Pixel ID
+      fbq('track','PageView');                        // visita
+      fbq('track','ViewContent',{page:'pressell'});   // ver conteúdo
     </script>
     <noscript>
       <img height="1" width="1" style="display:none"
            src="https://www.facebook.com/tr?id=1108333617311057&ev=PageView&noscript=1"/>
-      <meta http-equiv="refresh" content="1.5;url=https://t.me/SeuBotOficial">
+      <meta http-equiv="refresh" content="1.5;url=https://t.me/vazadosoficial00_bot">
     </noscript>
   </head>
 
@@ -52,9 +52,7 @@
           <span class="dot"></span>
           <span id="msg">Confirmando sua idade</span>
         </div>
-        <div class="bar" aria-hidden="true">
-          <div class="fill" id="fill"></div>
-        </div>
+        <div class="bar" aria-hidden="true"><div class="fill" id="fill"></div></div>
         <p class="hint" id="hint">Deixando ambiente seguro</p>
         <p class="hint">Se não redirecionar, <a id="cta" class="cta" href="#" rel="noopener noreferrer">ir agora</a>.</p>
         <span id="sr" class="sr-only">0% concluído</span>
@@ -62,11 +60,13 @@
     </div>
 
     <script>
-      // ================= CONFIG =================
-      const BOT_URL = "https://t.me/vazadosoficial00_bot"; 
-      const REDIRECT_DELAY_MS = 800;                 
-      // ==========================================
+      // =================== CONFIG ===================
+      const API_URL  = "https://web-production-29ac.up.railway.app"; // sua API
+      const BOT_NAME = "vazadosoficialvip1_bot="; // <-- sem @ (apenas o username)
+      const REDIRECT_DELAY_MS = 800; // janela pro Pixel subir eventos
+      // ==============================================
 
+      // UUID v4 simples p/ click_id
       function uuidv4(){
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
           const r = Math.random()*16|0, v = c=='x'?r:(r&0x3|0x8);
@@ -74,52 +74,100 @@
         });
       }
 
-      const qs   = window.location.search || '';         
-      const hash = window.location.hash || '';
-      const clickId = uuidv4();
-      const payload = encodeURIComponent(clickId + "__" + (qs ? qs.substring(1) : ""));
-      const DEST_HTTPS = BOT_URL + (BOT_URL.includes('?') ? '&' : '?') + 'start=' + payload + hash;
+      // Captura UTMs e fbclid
+      const params = new URLSearchParams(location.search);
+      const trackingData = {
+        fbclid: params.get('fbclid'),
+        utm_source: params.get('utm_source'),
+        utm_campaign: params.get('utm_campaign'),
+        utm_medium: params.get('utm_medium'),
+        utm_content: params.get('utm_content'),
+        utm_term: params.get('utm_term'),
+        src: params.get('src'),
+        sck: params.get('sck')
+      };
+      const hasTracking = trackingData.fbclid || trackingData.utm_source || trackingData.utm_campaign;
 
-      function tgSchemeFromTme(url){
-        try{
-          const u = new URL(url);
-          if (u.hostname === 't.me' && u.pathname.length > 1) {
-            const user = u.pathname.replace(/^\//,'');
-            return "tg://resolve?domain=" + encodeURIComponent(user) + "&start=" + payload;
-          }
-        }catch(e){}
-        return null;
-      }
-      const DEST_TG = tgSchemeFromTme(BOT_URL);
-
+      // Monta destinos
+      const hash = location.hash || '';
+      const baseTme = `https://t.me/${vazadosoficialvip1_bot}`;
+      const makeStart = (s) => `${baseTme}?start=${encodeURIComponent(s)}${hash}`;
+      const tgDeep = `tg://resolve?domain=${encodeURIComponent(BOT_NAME)}&start=`;
+      
+      // UI: barra/mensagens acessíveis
       const fill = document.getElementById('fill');
       const msg  = document.getElementById('msg');
       const sr   = document.getElementById('sr');
-      const start = performance.now();
+      const startTs = performance.now();
       (function anim(ts){
-        const elapsed = ts - start;
-        const pct = Math.min(100, (elapsed / REDIRECT_DELAY_MS) * 100);
+        const pct = Math.min(100, (ts - startTs) / REDIRECT_DELAY_MS * 100);
         fill.style.width = pct + '%';
         sr.textContent = Math.round(pct) + '% concluído';
         if (pct < 100) requestAnimationFrame(anim);
-      })(start);
+      })(startTs);
       setTimeout(()=>{ msg.textContent = "Deixando ambiente seguro"; }, 350);
       setTimeout(()=>{ msg.textContent = "Liberando acesso"; }, 650);
 
-      function go(){
+      // click_id para dedupe (Lead/Purchase)
+      const clickId = uuidv4();
+
+      // Dispara Lead + redireciona
+      async function go(finalStartPayload){
         try {
-          fbq('track', 'Lead', { destination:'telegram', event_id: clickId });
+          fbq('track','Lead',{ destination:'telegram', event_id: clickId });
         } catch(e) {}
         setTimeout(()=>{
-          window.location.replace(DEST_HTTPS);
-          if (DEST_TG) setTimeout(()=>{ window.location.href = DEST_TG; }, 400);
-        }, 220); 
+          const httpsUrl = makeStart(finalStartPayload);
+          window.location.replace(httpsUrl);
+          // tentativa de abrir app Telegram
+          setTimeout(()=>{ window.location.href = tgDeep + encodeURIComponent(finalStartPayload); }, 350);
+        }, 220);
       }
 
-      setTimeout(go, REDIRECT_DELAY_MS);
-      document.getElementById('cta').addEventListener('click', (e)=>{ e.preventDefault(); go(); });
+      // Integração com sua API (mantém seu fluxo + envia click_id junto)
+      async function run(){
+        try {
+          let shortId = null;
 
-      setTimeout(()=>{ if(!window.fbq) window.location.replace(DEST_HTTPS); }, REDIRECT_DELAY_MS + 900);
+          if (hasTracking) {
+            const body = { ...trackingData, click_id: clickId }; // envia click_id (se sua API ignorar, sem problemas)
+            const r = await fetch(`${API_URL}/api/save-tracking`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
+            const data = await r.json().catch(()=>({}));
+            if (data && data.short_id) shortId = data.short_id;
+            else if (trackingData.fbclid && trackingData.fbclid.length > 60) {
+              // fallback fbclid longo
+              const rf = await fetch(`${API_URL}/api/save-fbclid`, {
+                method: 'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ fbclid: trackingData.fbclid, click_id: clickId })
+              });
+              const df = await rf.json().catch(()=>({}));
+              if (df && df.short_id) shortId = `fb_${df.short_id}`;
+            }
+          }
+
+          // payload final: prioriza short_id da sua API; senão usa padrão "<click_id>__utm..."
+          const fallbackPayload = clickId + "__" + (location.search ? location.search.substring(1) : "");
+          const startPayload = shortId || fallbackPayload;
+
+          // espera mínima p/ consolidar eventos
+          setTimeout(()=> go(startPayload), REDIRECT_DELAY_MS);
+        } catch (e) {
+          const fallbackPayload = clickId + "__" + (location.search ? location.search.substring(1) : "");
+          setTimeout(()=> go(fallbackPayload), REDIRECT_DELAY_MS);
+        }
+      }
+
+      // CTA manual se algo bloquear auto-redirect
+      document.getElementById('cta').addEventListener('click', (e)=>{ e.preventDefault(); run(); });
+
+      // start automático
+      run();
+
+      // Hard fallback: sem fbq, redireciona mesmo assim
+      setTimeout(()=>{ if (!window.fbq) go(clickId); }, REDIRECT_DELAY_MS + 900);
     </script>
   </body>
 </html>
