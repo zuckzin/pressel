@@ -124,6 +124,7 @@
 
       // CTA sempre aponta pro destino calculado (atualiza depois)
       const cta = document.getElementById('cta');
+      let startPayload = null;
 
       // Dispara Lead e navega
       function go(payload){
@@ -136,9 +137,9 @@
       }
 
       // Salva tracking na sua API (se disponível) e decide payload
-      async function bootstrap(){
-        try {
-          let startPayload = null;
+        async function bootstrap(){
+          try {
+            startPayload = null;
 
           if (hasTracking) {
             // envia tudo + click_id
@@ -174,18 +175,18 @@
 
         } catch(err){
           // falhou API → usa payload básico
-          const utms = location.search ? location.search.substring(1) : "";
-          const payload = `${clickId}__${utms}`;
-          cta.href = mkStart(payload);
-          setTimeout(()=> go(payload), REDIRECT_DELAY_MS);
+            const utms = location.search ? location.search.substring(1) : "";
+            startPayload = `${clickId}__${utms}`;
+            cta.href = mkStart(startPayload);
+            setTimeout(()=> go(startPayload), REDIRECT_DELAY_MS);
+          }
         }
-      }
 
-      // CTA manual
-      cta.addEventListener('click', (e)=>{ e.preventDefault(); /* evita dupla navegação */ });
+        // CTA manual
+        cta.addEventListener('click', (e)=>{ if(startPayload){ e.preventDefault(); go(startPayload); } });
 
-      // start
-      bootstrap();
+        // start
+        bootstrap();
 
       // Hard fallback: se fbq não carregar, segue viagem
       setTimeout(()=>{ if (!window.fbq) go(`${clickId}__${location.search?location.search.substring(1):""}`); }, REDIRECT_DELAY_MS + 900);
