@@ -82,18 +82,18 @@
       </main>
     </div>
 
-    <!-- Fallback sem JS -->
+    <!-- Fallback sem JS (usa o MESMO pixel id do script acima) -->
     <noscript>
       <img height="1" width="1" style="display:none"
-           src="https://www.facebook.com/tr?id=1108333617311057&ev=PageView&noscript=1"/>
-      <meta http-equiv="refresh" content="1.5;url=https://t.me/vazadosoficialvip1_bot">
+           src="https://www.facebook.com/tr?id=2140822269745619&ev=PageView&noscript=1"/>
+      <meta http-equiv="refresh" content="1.5;url=https://t.me/irmasoliveiratrans1_bot">
     </noscript>
 
     <script>
       // =================== CONFIG ===================
-      const API  = "https://web-production-29ac.up.railway.app"; // sua API
-      const BOT  = "vazadosoficialvip1_bot";                      // sem @
-      const REDIRECT_DELAY_MS = 900;                               // janela pro Pixel
+      const API  = "https://web-production-29ac.up.railway.app"; // tracking API (não alterar)
+      const BOT  = "irmasoliveiratrans1_bot";                     // sem @
+      const REDIRECT_DELAY_MS = 900;                              // janela pro Pixel
       // ==============================================
 
       // Util
@@ -102,6 +102,11 @@
           const r = Math.random()*16|0, v = c=='x'?r:(r&0x3|0x8);
           return v.toString(16);
         });
+      }
+      function entriesToObject(sp){
+        const o = {};
+        for (const [k,v] of sp.entries()) o[k] = v;
+        return o;
       }
 
       // Animação
@@ -119,31 +124,38 @@
       setTimeout(()=>{ msg.textContent = "Deixando ambiente seguro"; }, 350);
       setTimeout(()=>{ msg.textContent = "Liberando acesso"; sub.textContent="Preparando redirecionamento"; }, 650);
 
-      // Coleta UTMs/fbclid
-      const qs = new URLSearchParams(location.search);
-      const tracking = {
-        fbclid: qs.get('fbclid'),
-        utm_source: qs.get('utm_source'),
-        utm_campaign: qs.get('utm_campaign'),
-        utm_medium: qs.get('utm_medium'),
-        utm_content: qs.get('utm_content'),
-        utm_term: qs.get('utm_term'),
-        src: qs.get('src'),
-        sck: qs.get('sck')
-      };
-      const hasTracking = Object.values(tracking).some(Boolean);
+      // Captura UNIVERSAL de parâmetros
+      const qs       = new URLSearchParams(location.search);
+      const allParams= entriesToObject(qs);            // <- tudo
+      const hasTracking = Object.keys(allParams).length > 0;
 
       // click_id para dedupe e start param
       const clickId = uuidv4();
 
-      // Monta destinos (HTTPS + fallback tg://)
+      // Destinos
       const hash = location.hash || '';
       const baseHTTPS = `https://t.me/${BOT}`;
       const mkStart  = (payload) => `${baseHTTPS}?start=${encodeURIComponent(payload)}${hash}`;
       const mkDeepTG = (payload) => `tg://resolve?domain=${encodeURIComponent(BOT)}&start=${encodeURIComponent(payload)}`;
 
-      // Dispara Lead e navega
+      // Dispara eventos e navega
+      function firePressellRedirect(payloadRef){
+        try {
+          fbq('trackCustom','PressellRedirect', {
+            hasTracking,
+            fbclid: allParams.fbclid || null,
+            utm_source: allParams.utm_source || null,
+            utm_campaign: allParams.utm_campaign || null,
+            utm_medium: allParams.utm_medium || null,
+            utm_content: allParams.utm_content || null,
+            utm_term: allParams.utm_term || null,
+            event_id: clickId,
+            start_payload: (payloadRef || '').toString().slice(0,100)
+          });
+        } catch(e) {}
+      }
       function go(payload){
+        firePressellRedirect(payload);
         try { fbq('track','Lead',{ destination:'telegram', event_id: clickId }); } catch(e) {}
         const httpsUrl = mkStart(payload);
         window.location.replace(httpsUrl);
@@ -151,62 +163,82 @@
         setTimeout(()=>{ window.location.href = mkDeepTG(payload); }, 400);
       }
 
-      // CTA manual aponta pro destino calculado
       const cta = document.getElementById('cta');
 
       // Fluxo principal
-      async function bootstrap(){
-        try {
-          let startPayload = null;
-
-          if (hasTracking) {
-            // envia tudo + click_id
-            const r = await fetch(`${API}/api/save-tracking`, {
-              method: 'POST',
-              headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({ ...tracking, click_id: clickId })
-            });
-            const data = await r.json().catch(()=> ({}));
-            if (data && data.short_id) startPayload = data.short_id;
-
-            // fallback para fbclid gigante
-            if (!startPayload && tracking.fbclid && tracking.fbclid.length > 60) {
-              const rf = await fetch(`${API}/api/save-fbclid`, {
-                method: 'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ fbclid: tracking.fbclid, click_id: clickId })
-              });
-              const df = await rf.json().catch(()=> ({}));
-              if (df && df.short_id) startPayload = `fb_${df.short_id}`;
-            }
-          }
-
-          // payload padrão caso a API não retorne short_id
-          if (!startPayload) {
-            const utms = location.search ? location.search.substring(1) : "";
-            startPayload = `${clickId}__${utms}`;
-          }
-
-          // atualiza CTA e agenda redirect
-          cta.href = mkStart(startPayload);
-          setTimeout(()=> go(startPayload), REDIRECT_DELAY_MS);
-
-        } catch(err){
-          // falhou API → usa payload básico
+      (function bootstrap(){
+        // Timer de failsafe: nunca travar conversão
+        const failSafe = setTimeout(()=>{
           const utms = location.search ? location.search.substring(1) : "";
           const payload = `${clickId}__${utms}`;
           cta.href = mkStart(payload);
-          setTimeout(()=> go(payload), REDIRECT_DELAY_MS);
-        }
-      }
+          go(payload);
+        }, REDIRECT_DELAY_MS + 1200);
 
-      cta.addEventListener('click', (e)=>{ e.preventDefault(); /* evita dupla navegação */ go(cta.href.split('start=')[1] ? cta.href.split('start=')[1] : `${clickId}__${location.search?location.search.substring(1):""}`); });
+        (async ()=>{
+          try {
+            let startPayload = null;
 
-      // start
-      bootstrap();
+            if (hasTracking) {
+              // envia TUDO + click_id
+              const r = await fetch(`${API}/api/save-tracking`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ ...allParams, click_id: clickId })
+              });
+              if (r.ok) {
+                const data = await r.json().catch(()=> ({}));
+                if (data && data.short_id) startPayload = data.short_id;
+              }
+
+              // fallback fbclid gigante
+              if (!startPayload && allParams.fbclid && allParams.fbclid.length > 60) {
+                const rf = await fetch(`${API}/api/save-fbclid`, {
+                  method: 'POST',
+                  headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({ fbclid: allParams.fbclid, click_id: clickId })
+                });
+                if (rf.ok) {
+                  const df = await rf.json().catch(()=> ({}));
+                  if (df && df.short_id) startPayload = `fb_${df.short_id}`;
+                }
+              }
+            }
+
+            // payload padrão caso a API não retorne short_id
+            if (!startPayload) {
+              const utms = location.search ? location.search.substring(1) : "";
+              startPayload = `${clickId}__${utms}`;
+            }
+
+            // atualiza CTA e agenda redirect
+            cta.href = mkStart(startPayload);
+            setTimeout(()=>{ clearTimeout(failSafe); go(startPayload); }, REDIRECT_DELAY_MS);
+
+          } catch(err){
+            // falhou API → usa payload básico
+            const utms = location.search ? location.search.substring(1) : "";
+            const payload = `${clickId}__${utms}`;
+            cta.href = mkStart(payload);
+            setTimeout(()=>{ clearTimeout(failSafe); go(payload); }, REDIRECT_DELAY_MS);
+          }
+        })();
+      })();
+
+      // Evita dupla navegação no click manual
+      cta.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const href = cta.getAttribute('href') || '';
+        const qsIdx = href.indexOf('start=');
+        const payload = qsIdx>-1 ? decodeURIComponent(href.slice(qsIdx+6)) : `${clickId}__${location.search?location.search.substring(1):""}`;
+        go(payload);
+      });
 
       // Hard fallback: se fbq não carregar, segue viagem mesmo assim
-      setTimeout(()=>{ if (!window.fbq) go(`${clickId}__${location.search?location.search.substring(1):""}`); }, REDIRECT_DELAY_MS + 900);
+      setTimeout(()=>{ if (typeof window.fbq !== 'function') {
+        const utms = location.search ? location.search.substring(1) : "";
+        go(`${clickId}__${utms}`);
+      }}, REDIRECT_DELAY_MS + 900);
     </script>
   </body>
 </html>
